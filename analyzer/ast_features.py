@@ -43,13 +43,28 @@ class FeatureExtractor(ast.NodeVisitor):
         self.variable_names = []
         self.features = CodeFeatures()
 
+    def _enter_block(self):
+        self.current_depth += 1
+        self.max_depth = max(self.max_depth, self.current_depth)
+
     def visit_FunctionDef(self, node):
         self.features.num_functions += 1
         if ast.get_docstring(node):
             self.features.has_docstrings = True
-        self.functions.append(len(node.body))
-        self.current_depth += 1
-        self.max_depth = max(self.max_depth, self.current_depth)
+        # Length in actual source lines, not top-level statement count.
+        self.functions.append(node.end_lineno - node.lineno + 1)
+        # Parameters are ast.arg nodes, not Name nodes in Store context,
+        # so visit_Name never sees them; collect them here for entropy.
+        args = node.args
+        params = list(args.posonlyargs) + list(args.args) + list(args.kwonlyargs)
+        if args.vararg:
+            params.append(args.vararg)
+        if args.kwarg:
+            params.append(args.kwarg)
+        for param in params:
+            if param.arg not in ('self', 'cls'):
+                self.variable_names.append(param.arg)
+        self._enter_block()
         self.generic_visit(node)
         self.current_depth -= 1
 
@@ -76,28 +91,64 @@ class FeatureExtractor(ast.NodeVisitor):
             self.variable_names.append(node.id)
         self.generic_visit(node)
 
+    def visit_Assign(self, node):
+        # An ALL_CAPS assignment is a named constant -- the accepted fix
+        # for magic numbers -- so its numeric value must not be counted.
+        is_named_constant = (
+            isinstance(node.value, ast.Constant)
+            and all(isinstance(t, ast.Name) and t.id.isupper() for t in node.targets)
+        )
+        if is_named_constant:
+            for target in node.targets:
+                self.visit(target)   # the name itself still feeds naming entropy
+        else:
+            self.generic_visit(node)
+
     def visit_Constant(self, node):
         if isinstance(node.value, (int, float)) and abs(node.value) > 1:
             self.features.num_magic_numbers += 1
         self.generic_visit(node)
 
     def visit_For(self, node):
-        self.current_depth += 1
-        self.max_depth = max(self.max_depth, self.current_depth)
+        self._enter_block()
         self.generic_visit(node)
         self.current_depth -= 1
 
-    def visit_If(self, node):
-        self.current_depth += 1
-        self.max_depth = max(self.max_depth, self.current_depth)
-        self.generic_visit(node)
-        self.current_depth -= 1
+    visit_AsyncFor = visit_For
 
     def visit_While(self, node):
-        self.current_depth += 1
-        self.max_depth = max(self.max_depth, self.current_depth)
+        self._enter_block()
         self.generic_visit(node)
         self.current_depth -= 1
+
+    def visit_With(self, node):
+        self._enter_block()
+        self.generic_visit(node)
+        self.current_depth -= 1
+
+    visit_AsyncWith = visit_With
+
+    def visit_If(self, node):
+        self.visit(node.test)
+        self._enter_block()
+        for child in node.body:
+            self.visit(child)
+        # Python desugars `elif` into a nested If as the sole statement of
+        # orelse, at the same column as its parent. Treat it as a sibling
+        # branch (same depth), not one level deeper. A real `else:` block
+        # stays at the current depth, like the if body.
+        is_elif = (
+            len(node.orelse) == 1
+            and isinstance(node.orelse[0], ast.If)
+            and node.orelse[0].col_offset == node.col_offset
+        )
+        if is_elif:
+            self.current_depth -= 1
+            self.visit(node.orelse[0])
+        else:
+            for child in node.orelse:
+                self.visit(child)
+            self.current_depth -= 1
 
 
 def extract_features(code: str) -> CodeFeatures:
