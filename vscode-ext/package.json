@@ -1,0 +1,31 @@
+{
+    "name": "code-review-ml",
+    "displayName": "ML Code Reviewer",
+    "description": "AI-powered code review using AST analysis and XGBoost",
+    "version": "0.0.1",
+    "engines": { "vscode": "^1.85.0" },
+    "categories": ["Linters"],
+    "activationEvents": [],
+    "main": "./out/extension.js",
+    "contributes": {
+      "commands": [
+        {
+          "command": "codeReview.reviewFile",
+          "title": "Code Review: Analyze Current File"
+        }
+      ]
+    },
+    "scripts": {
+      "vscode:prepublish": "npm run compile",
+      "compile": "tsc -p ./",
+      "watch": "tsc -watch -p ./"
+    },
+    "devDependencies": {
+      "@types/node": "^20.0.0",
+      "@types/vscode": "^1.85.0",
+      "typescript": "^5.3.0"
+    },
+    "dependencies": {
+      "axios": "^1.6.0"
+    }
+  }
