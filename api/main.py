@@ -71,6 +71,7 @@ def review_code(input: CodeInput):
         'has_docstrings':        int(features.has_docstrings),
         'num_magic_numbers':     features.num_magic_numbers,
         'num_try_except':        features.num_try_except,
+        'num_functions':         features.num_functions,
     }
 
     # Step 4: Run the XGBoost classifier
