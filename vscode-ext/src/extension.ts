@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // While developing locally, point to your local FastAPI server
 // After deploying to Render, change this to your live URL
-const API_URL = 'http://localhost:8000';
+const API_URL = 'https://code-review-ml.onrender.com';
 
 interface ReviewResponse {
   readability_score: number;

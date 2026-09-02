@@ -7,14 +7,6 @@ Static analysis meets machine learning. Parses Python source into an AST, extrac
 
 ---
 
-## Demo
-
-![Feature importance](outputs/feature_importance.png)
-
-*Running the reviewer on a deeply nested function — score appears in the status bar, suggestions open in a side panel.*
-
----
-
 ## Why This Isn't a ChatGPT Wrapper
 
 The obvious version of this tool sends code to an LLM and asks "review this." That approach has three problems: the model invents issues that aren't there, every request costs money regardless of whether the code has problems, and the same input produces different output run to run.
@@ -95,8 +87,8 @@ Cyclomatic complexity and naming entropy carry the most predictive weight. `num_
 
 ## Model Performance
 
-- **AUC-ROC:** 0.95 on held-out test set
-- **5-fold CV AUC:** 0.93 ± 0.02
+- **AUC-ROC:** 0.9650 on held-out test set
+- **5-fold CV AUC:** 0.9445 ± 0.0200
 - **Training set:** 800 samples, 60/40 class balance
 
 Full details and limitations in [MODEL_CARD.md](MODEL_CARD.md).
