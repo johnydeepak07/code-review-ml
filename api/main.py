@@ -102,3 +102,7 @@ def review_code(input: CodeInput):
 @app.get('/health')
 def health():
     return {'status': 'healthy', 'model': 'readability_classifier_v1'}
+
+@app.get('/')
+def root():
+    return {'service': 'code-review-api', 'docs': '/docs'}
