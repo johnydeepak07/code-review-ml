@@ -2,8 +2,9 @@
 
 Static analysis meets machine learning. Parses Python source into an AST, extracts structural features, scores readability with a trained XGBoost classifier, and generates targeted refactoring suggestions grounded in the measured metrics — not in an LLM's guess about what might be wrong.
 
-**Live API:** [your-render-url.onrender.com/docs](https://your-render-url.onrender.com/docs)
-**VS Code Extension:** [marketplace link](https://marketplace.visualstudio.com/)
+**Live API:** [code-review-ml.onrender.com/docs] (https://code-review-ml.onrender.com/docs)
+
+> Hosted on Render's free tier — the first request after inactivity takes ~50 seconds to spin up.
 
 ---
 
@@ -119,6 +120,8 @@ Open `http://localhost:8000/docs` for the interactive API.
 
 ### VS Code Extension
 
+Built with the VS Code Extension API in TypeScript. Not published to the marketplace — run it locally:
+
 ```bash
 cd vscode-ext
 npm install
@@ -133,6 +136,7 @@ Open `vscode-ext/` as a workspace folder and press F5 to launch the Extension De
 
 **`POST /review`**
 
+Request:
 ```json
 {
   "code": "def f(x,y):\n    for i in range(100):\n        if i > 50:\n            a = i * 3.14\n    return a",
@@ -140,23 +144,26 @@ Open `vscode-ext/` as a workspace folder and press F5 to launch the Extension De
 }
 ```
 
+Response:
 ```json
 {
-  "readability_score": 0.183,
-  "grade": "B",
-  "cyclomatic_complexity": 4.0,
-  "max_nesting_depth": 4,
-  "naming_entropy": 0.0,
-  "has_docstrings": false,
-  "num_magic_numbers": 3,
-  "suggestions": "1. Reduce nesting depth from 4 levels...",
-  "filename": "example.py"
+"readability_score":0.816,
+"grade":"A",
+"cyclomatic_complexity":3.0,
+"max_nesting_depth":3,"naming_entropy":0.0,
+"avg_function_length":5.0,
+"has_docstrings":false,
+"num_magic_numbers":3,
+"suggestions":"1. The naming entropy is currently 0.00, which indicates that variable names like `x`, `y`, and `a` are too short and non-descriptive. Consider using more meaningful names that convey the purpose of these variables to improve code readability and maintainability.\n\n2. The function `f` lacks docstrings, which is essential for documenting its parameters and return values. Adding a docstring will enhance the clarity of the function's purpose and usage, making it easier for other developers to understand how to use it correctly.\n\n3. The variable `i` could benefit from a more descriptive name, as its current single-character designation contributes to the low naming entropy. Using a name that reflects its role in the loop, such as `index` or `counter`, would improve the self-documenting nature of the code.",
+"filename":"example.py"
 }
 ```
 
-**`GET /health`** — service health check.
+**`GET /health`** 
 
----
+'''json
+{"status":"healthy","model":"readability_classifier_v1"}
+'''
 
 ## Tests
 
